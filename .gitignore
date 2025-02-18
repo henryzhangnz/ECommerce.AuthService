@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/ECommerce.AuthService/bin/Debug
+/ECommerce.AuthService/obj
+/Ecommerce.AuthService.Tests/bin/Debug/net8.0
+/Ecommerce.AuthService.Tests/obj
