@@ -30,5 +30,10 @@ namespace ECommerce.AuthService.Repositories
         {
             return await _context.Users.FirstOrDefaultAsync(user => user.Username == username);
         }
+
+        public async Task<User> GetUserById(Guid id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
     }
 }

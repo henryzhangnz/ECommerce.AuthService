@@ -24,6 +24,16 @@ builder.Services.AddAuthentication(opt =>
     })
     .AddJwtBearer(opt =>
     {
+        opt.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Read token from cookie
+                context.Token = context.Request.Cookies["authToken"];
+                return Task.CompletedTask;
+            }
+        };
+
         opt.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
@@ -37,6 +47,15 @@ builder.Services.AddAuthentication(opt =>
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", builder =>
+        builder.WithOrigins("http://localhost:4200", "http://localhost:88")
+               .AllowCredentials()
+               .AllowAnyMethod()
+               .AllowAnyHeader());
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -53,6 +72,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.PrePopulation();
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 

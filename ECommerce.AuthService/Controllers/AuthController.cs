@@ -1,8 +1,10 @@
 ﻿using ECommerce.AuthService.Auth;
 using ECommerce.AuthService.Model;
 using ECommerce.AuthService.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ECommerce.AuthService.Controllers
 {
@@ -41,7 +43,8 @@ namespace ECommerce.AuthService.Controllers
             await _userRepo.CreateUser(user);
             string token = _tokenService.GenerateToken(user);
 
-            return Ok(token);
+            SetCookie(token);
+            return Ok();
         }
 
         [HttpPost("login")]
@@ -54,15 +57,69 @@ namespace ECommerce.AuthService.Controllers
 
             var user = await _userRepo.GetUser(userLoginDto.Username);
             if (user == null || new PasswordHasher<User>()
-                                        .VerifyHashedPassword(user, 
-                                                            user.PasswordHash, 
-                                                            userLoginDto.Password) == 
+                                        .VerifyHashedPassword(user,
+                                                            user.PasswordHash,
+                                                            userLoginDto.Password) ==
                                             PasswordVerificationResult.Failed)
             {
                 return Unauthorized("Invalid username or password.");
             }
 
-            return Ok(_tokenService.GenerateToken(user));
+            string token = _tokenService.GenerateToken(user);
+            SetCookie(token);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (!Guid.TryParse(userId, out var guidId))
+            {
+                return BadRequest("Invalid UserId");
+            }
+            var user = await _userRepo.GetUserById(guidId);
+
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+            };
+
+            return Ok(userDto);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("authToken", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Set to true in production (for HTTPS)
+                SameSite = SameSiteMode.None,
+            });
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+        private void SetCookie(string token)
+        {
+            // Store token in an HttpOnly cookie
+            Response.Cookies.Append("authToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Set to true in production (for HTTPS)
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddHours(1)
+            });
         }
     }
 }

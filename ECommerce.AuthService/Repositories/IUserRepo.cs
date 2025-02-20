@@ -7,5 +7,6 @@ namespace ECommerce.AuthService.Repositories
         Task<Guid> CreateUser(User user);
         Task<bool> CheckIfUserExists(string username);
         Task<User> GetUser(string username);
+        Task<User> GetUserById(Guid id);
     }
 }
