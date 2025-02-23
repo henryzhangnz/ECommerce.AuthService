@@ -51,7 +51,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", builder =>
-        builder.WithOrigins("http://localhost:4200", "http://localhost:88")
+        builder.WithOrigins("http://localhost:4200", "http://localhost", "http://ecommerce.com")
                .AllowCredentials()
                .AllowAnyMethod()
                .AllowAnyHeader());
